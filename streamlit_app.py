@@ -60,9 +60,20 @@ if pagina == 'Dashboard':
     col1.metric('Estágio IV do Câncer', '{:.2%}'.format(filtro_dados['Cancer_Stage'].value_counts(normalize = True)['Stage IV']))
 
 
+    # # Função que troca ponto por vírgula
+    # def formatar_com_virgula(x, pos):
+    #     return f'{x}'.replace('.', ',')
+
+    # formatter = FuncFormatter(formatar_com_virgula)
+
     fig = sns.scatterplot(data = filtro_dados, x = 'Survival_Years', y = 'Treatment_Cost_USD', hue = 'Cancer_Stage')
     plt.xlabel('Anos de Sobrevivência')
     plt.ylabel('Custo do Tratamenro (USD)')
+    plt.title('Anos de Sobrevivência X Custo')
+
+    # # Aplicar a formatação aos eixos
+    # plt.gca().xaxis.set_major_formatter(formatter)
+    # plt.gca().yaxis.set_major_formatter(formatter)
 
     col2.pyplot(fig.get_figure())
 
