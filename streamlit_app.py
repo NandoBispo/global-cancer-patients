@@ -83,85 +83,37 @@ elif pagina == 'Processo':
     - **Modelo escolhido**: O melhor desempenho foi com **BaggingClassifier**, conforme a métrica F1-score e Acurácia Balanceada.
     """)
 
-# # ===========================
-# # 🔮 Página de Previsão
-# # ===========================
-# elif pagina == 'Previsão':
-#     st.title("🔮 Previsão de Sobrevivência a Longo Prazo")
+# ===========================
+# 🔮 Página de Previsão
+# ===========================
+elif pagina == 'Previsão':
+    # st.set_page_config(
+    #     page_title="Previsão de Prognóstico de Câncer",
+    #     page_icon="🔮",
+    #     layout="wide"
+    # )
 
-#     try:
-#         modelo = joblib.load('modelo_bagging.pkl')
-#         colunas_modelo = joblib.load('colunas_modelo.pkl')
-#     except FileNotFoundError:
-#         st.error("❌ Modelo não encontrado. Certifique-se de executar `modelo.py` para treinar e salvar o modelo.")
-#     else:
-#         st.markdown("Preencha os dados abaixo para obter a previsão:")
-
-#         idade = st.slider("Idade", 0, 100, 50)
-#         alcool = st.selectbox("Consumo de Álcool", ["Baixo", "Médio", "Alto"])
-#         genetico = st.selectbox("Risco Genético", ["Baixo", "Médio", "Alto"])
-#         poluicao = st.selectbox("Nível de Poluição", ["Baixo", "Médio", "Alto"])
-#         obesidade = st.selectbox("Nível de Obesidade", ["Baixo", "Médio", "Alto"])
-#         fumo = st.selectbox("Nível de Tabagismo", ["Baixo", "Médio", "Alto"])
-
-#         if st.button("🔍 Prever"):
-#             entrada = {
-#                 'Age': idade,
-#                 f"Alcohol_Use_Categoria_{alcool}": 1,
-#                 f"Genetic_Risk_Categoria_{genetico}": 1,
-#                 f"Air_Pollution_Categoria_{poluicao}": 1,
-#                 f"Obesity_Level_Categoria_{obesidade}": 1,
-#                 f"Smoking_Categoria_{fumo}": 1
-#             }
-
-#             X_novo = pd.DataFrame(columns=colunas_modelo)
-#             X_novo.loc[0] = 0  # Preenche com zeros
-#             for col, val in entrada.items():
-#                 if col in X_novo.columns:
-#                     X_novo.at[0, col] = val
-
-#             pred = modelo.predict(X_novo)[0]
-#             prob = modelo.predict_proba(X_novo)[0][pred]
-
-#             st.success(f"🧬 Sobrevivência Prevista: {'Longo Prazo' if pred == 1 else 'Curto Prazo'}")
-#             st.write(f"📊 Probabilidade: {prob:.2%}")
-
-# --------------------------------------------------------------------
-
-    # --- Configuração da Página ---
-    st.set_page_config(
-        page_title="Previsão de Prognóstico de Câncer",
-        page_icon="🔮",
-        layout="wide"
-    )
+    st.title("🔮 Previsão de Prognóstico de Câncer")
+    st.markdown("Preencha os dados do paciente abaixo para obter uma previsão sobre a gravidade do prognóstico.")
 
     # --- Carregamento do Modelo ---
-    # Usamos @st.cache_resource para carregar o modelo apenas uma vez, otimizando o app.
     @st.cache_resource
     def carregar_modelo():
-        """Função para carregar o pipeline do arquivo .pkl"""
         try:
             with open('modelo_cancer.pkl', 'rb') as file:
-                modelo = pickle.load(file)
-            return modelo
+                return pickle.load(file)
         except FileNotFoundError:
             return None
 
     modelo = carregar_modelo()
 
-# --- Interface Principal ---
-elif pagina == 'Previsão':
-    st.title("🔮 Previsão de Prognóstico de Câncer")
-    st.markdown("Preencha os dados do paciente abaixo para obter uma previsão sobre a gravidade do prognóstico.")
-
     if modelo is None:
-        st.error("❌ **Arquivo do modelo não encontrado!** Certifique-se de que o arquivo `modelo_cancer.pkl` está na mesma pasta que este script.")
+        st.error("❌ Arquivo do modelo não encontrado! Certifique-se de que `modelo_cancer.pkl` está no mesmo diretório do app.")
     else:
-        # --- Formulário de Entrada de Dados ---
+        # --- Entrada de Dados ---
         st.divider()
         st.subheader("Por favor, insira os dados do paciente:")
 
-        # Organizando os inputs em colunas para uma melhor visualização
         col1, col2 = st.columns(2)
 
         with col1:
@@ -183,15 +135,10 @@ elif pagina == 'Previsão':
 
         st.divider()
 
-        # --- Botão de Previsão e Exibição do Resultado ---
         if st.button("🔍 Realizar Previsão", type="primary", use_container_width=True):
-            
-            # 1. Mapeamento da variável ordinal (como fizemos no Colab)
             stage_map = {'Stage 0': 0, 'Stage I': 1, 'Stage II': 2, 'Stage III': 3, 'Stage IV': 4}
             cancer_stage_ordinal = stage_map[cancer_stage_text]
 
-            # 2. Criação do DataFrame de entrada
-            # As colunas devem ter EXATAMENTE os mesmos nomes das features usadas no treinamento
             input_data = pd.DataFrame({
                 'Age': [age],
                 'Treatment_Cost_USD': [treatment_cost],
@@ -207,15 +154,13 @@ elif pagina == 'Previsão':
             st.write("⚙️ **Dados de entrada para o modelo:**")
             st.dataframe(input_data)
 
-            # 3. Realização da Previsão
-            # O pipeline cuida de todo o pré-processamento!
+            # Realiza previsão
             predicao = modelo.predict(input_data)[0]
             probabilidades = modelo.predict_proba(input_data)
-            
-            # Mapeando as probabilidades para as classes para exibição
+
             prob_df = pd.DataFrame(probabilidades, columns=modelo.classes_, index=["Probabilidade"])
 
-            # 4. Exibição do Resultado
+            # Resultado
             st.write("---")
             st.subheader("📈 Resultado da Previsão")
 
@@ -226,15 +171,11 @@ elif pagina == 'Previsão':
 
             st.write("O gráfico abaixo mostra a confiança do modelo em cada classe:")
             st.bar_chart(prob_df.T)
-            
-            st.info(
-                """
-                **Aviso Importante:** Conforme identificado na fase de análise, o modelo apresentou um desempenho
-                excepcionalmente alto, sugerindo um possível vazamento de dados no dataset original.
-                Estes resultados devem ser interpretados com cautela. O foco deste projeto é a
-                demonstração da implantação de uma aplicação funcional.
-                """
-            )
+
+            st.info("""
+            **Aviso Importante:** O modelo foi treinado com dados sintéticos e apresenta desempenho elevado.
+            Os resultados são ilustrativos e não devem ser usados para decisões clínicas.
+            """)
 
 
 # ===========================
