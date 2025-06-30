@@ -117,14 +117,13 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 
-def carregar_e_preparar_dados(caminho_csv):
+def carregar_dados_processados():
+
     """
     Carrega o CSV e executa o pré-processamento básico.
     """
-    # def carregar_dados_processados():
     url = 'https://raw.githubusercontent.com/NandoBispo/global-cancer-patients/main/dados/global_cancer_patients_2015_2024.csv'
     df = pd.read_csv(url)
-    # df = pd.read_csv(caminho_csv)
 
     # Remover coluna identificadora
     dados = df.drop(columns=['Patient_ID'], errors='ignore')
