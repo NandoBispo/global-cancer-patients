@@ -4,6 +4,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import joblib
+from matplotlib.ticker import FuncFormatter
 from pre_processamento import carregar_dados_processados
 
 st.set_page_config(page_title="Predição de Sobrevivência", layout="wide")
@@ -86,38 +87,74 @@ elif pagina == 'Previsão':
 elif pagina == 'Dashboard':
     st.title("📊 Dashboard - Dados Tratados")
 
-    dados = carregar_dados_processados()
+    url = 'https://raw.githubusercontent.com/NandoBispo/global-cancer-patients/main/dados/global_cancer_patients_2015_2024.csv'
+    df = pd.read_csv(url)
 
     col1, col2, col3 = st.columns(3)
 
-    regiao = col1.selectbox("Região", dados['Country_Region'].unique())
+    st.markdown('---')
+
+    regiao = col1.selectbox("Região", df['Country_Region'].unique())
     sexo = col2.selectbox("Sexo", ['Masculino', 'Feminino'])
-    ano = col3.selectbox("Ano", sorted(dados['Year'].unique()))
+    ano = col3.selectbox("Ano", list(range(2015, 2025)))
 
     sexo = 'Male' if sexo == 'Masculino' else 'Female'
 
-    filtro = (
-        (dados['Country_Region'] == regiao) &
-        (dados['Gender'] == sexo) &
-        (dados['Year'] == ano)
-    )
-    dados_filtrados = dados[filtro]
+    filtro_regiao = df['Country_Region'] == regiao
+    filtro_sexo = df['Gender'] == sexo
+    filtro_ano = df['Year'] == ano
+
+    dados_filtrados = df.loc[filtro_regiao & filtro_sexo & filtro_ano]
 
     col1, col2 = st.columns([1, 3])
 
     col1.metric('Idade Média', round(dados_filtrados['Age'].mean(), 1))
-    col1.metric('Tempo Médio de Vida', round(dados_filtrados['Survival_Years'].mean(), 1))
-    col1.metric('Custo Médio do Tratamento', round(dados_filtrados['Treatment_Cost_USD'].mean(), 1))
-    col1.metric('Estágio III do Câncer',
-                '{:.2%}'.format(dados_filtrados['Cancer_Stage'].value_counts(normalize=True).get('Stage III', 0)))
-    col1.metric('Estágio IV do Câncer',
-                '{:.2%}'.format(dados_filtrados['Cancer_Stage'].value_counts(normalize=True).get('Stage IV', 0)))
+    col1.metric('Tempo Médio de Vida (em Anos)', round(dados_filtrados['Survival_Years'].mean(), 1))
+    col1.metric('Custo Médio do Tratamento (USD)',
+                f"${round(dados_filtrados['Treatment_Cost_USD'].mean(), 2):,.2f}")
 
-    fig = sns.scatterplot(data=dados_filtrados, x='Survival_Years', y='Treatment_Cost_USD', hue='Cancer_Stage')
+
+    # 🔍 Distribuição dos Estágios do Câncer
+    # st.subheader("📊 Distribuição dos Estágios do Câncer")
+
+    # if not dados_filtrados.empty:
+    #     distribuicao_estagios = (
+    #         dados_filtrados['Cancer_Stage']
+    #         .value_counts(normalize=True)
+    #         .sort_index()
+    #     )
+
+    #     for estagio, proporcao in distribuicao_estagios.items():
+    #         st.write(f"- **{estagio}**: {proporcao:.2%}")
+    # else:
+    #     st.warning("Nenhum dado disponível para os filtros selecionados.")
+
+    if not dados_filtrados.empty:
+        distribuicao_estagios = (
+            dados_filtrados['Cancer_Stage']
+            .value_counts(normalize=True)
+            .sort_index()
+        )
+
+        col1.markdown("#### 📊 Estágios do Câncer")
+        for estagio, proporcao in distribuicao_estagios.items():
+            col1.markdown(f"- **{estagio}**: {proporcao:.2%}")
+    else:
+        col1.warning("Nenhum dado disponível para os filtros selecionados.")
+
+    # 🎯 Gráfico de dispersão: Anos de Sobrevivência vs Custo
+    fig = sns.scatterplot(data=dados_filtrados,
+                          x='Survival_Years',
+                          y='Treatment_Cost_USD')
+                        #   hue='Cancer_Stage')
     plt.xlabel('Anos de Sobrevivência')
     plt.ylabel('Custo do Tratamento (USD)')
-    plt.title('Anos de Sobrevivência X Custo')
+    plt.title('Anos de Sobrevivência X Custo do Tratamento')
+    plt.ticklabel_format(style='plain', axis='y')  # evita notação científica
+    plt.gca().get_yaxis().set_major_formatter(
+    plt.matplotlib.ticker.FuncFormatter(lambda x, _: f'{int(x):,}'.replace(",", ".")))  # separador de milhar
 
     col2.pyplot(fig.get_figure())
 
-    st.markdown("---")
+    st.markdown('---')
+

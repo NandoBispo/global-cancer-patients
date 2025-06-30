@@ -99,6 +99,13 @@ def carregar_dados_processados():
     dados['Age'] = (dados['Age'] - np.mean(dados['Age'])) / np.std(dados['Age'])
 
     # Variável de interesse
-    dados['Survived'] = dados['Survival_Years'].apply(lambda x: 1 if x > 0 else 0)
+    # dados['Survived'] = dados['Survival_Years'].apply(lambda x: 1 if x > 0 else 0)
+    def classificar_binaria(faixa):
+        if faixa in ['menos de 1 ano', '1 a 3 anos']:
+            return 'Curto Prazo'
+        else:
+            return 'Longo Prazo'
+
+    dados['Faixa_Survival_Binaria'] = dados['Faixa_Survival'].apply(classificar_binaria)
 
     return dados
