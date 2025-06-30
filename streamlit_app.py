@@ -11,7 +11,6 @@ from pre_processamento import carregar_dados_processados
 st.set_page_config(page_title="Predição de Sobrevivência", layout="wide")
 
 # Navegação lateral
-# opcoes = ['Boas-vindas', 'Processo', 'Previsão', 'Dashboard']
 opcoes = ['Boas-vindas', 'Sobre o Projeto', 'Processo', 'Previsão', 'Dashboard']
 
 pagina = st.sidebar.selectbox('📌 Navegue pelo menu:', opcoes)
@@ -104,6 +103,7 @@ elif pagina == 'Previsão':
                 return pickle.load(file)
         except FileNotFoundError:
             return None
+            
 
     modelo = carregar_modelo()
 
