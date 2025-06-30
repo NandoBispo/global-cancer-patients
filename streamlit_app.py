@@ -1,5 +1,8 @@
 # === app.py ===
 import streamlit as st
+import sklearn
+st.write(f"Versão do scikit-learn no ambiente Streamlit: {sklearn.__version__}")
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -9,6 +12,7 @@ from matplotlib.ticker import FuncFormatter
 from pre_processamento import carregar_dados_processados
 
 st.set_page_config(page_title="Predição de Sobrevivência", layout="wide")
+
 
 # Navegação lateral
 opcoes = ['Boas-vindas', 'Sobre o Projeto', 'Processo', 'Previsão', 'Dashboard']
@@ -99,10 +103,12 @@ elif pagina == 'Previsão':
     @st.cache_resource
     def carregar_modelo():
         try:
-            with open('modelo_cancer.pkl', 'rb') as file:
+            with open("modelo_cancer.pkl", "rb") as file:
                 return pickle.load(file)
-        except FileNotFoundError:
+        except Exception as e:
+            st.error(f"❌ Erro ao carregar o modelo: {e}")
             return None
+
         
     # def carregar_modelo():
     #     try:
