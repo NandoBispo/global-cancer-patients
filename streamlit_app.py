@@ -97,11 +97,18 @@ elif pagina == 'Previsão':
 
     # --- Carregamento do Modelo ---
     @st.cache_resource
+    # def carregar_modelo():
+    #     try:
+    #         with open('modelo_cancer.pkl', 'rb') as file:
+    #             return pickle.load(file)
+    #     except FileNotFoundError:
+    #         return None
+        
     def carregar_modelo():
         try:
-            with open('modelo_cancer.pkl', 'rb') as file:
-                return pickle.load(file)
-        except FileNotFoundError:
+            return joblib.load("modelo_cancer.pkl")
+        except Exception as e:
+            st.error(f"Erro ao carregar modelo: {e}")
             return None
             
 
