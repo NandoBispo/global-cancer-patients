@@ -1,0 +1,7 @@
+[theme]
+base="light"
+primaryColor="#006d77"               # Verde petróleo
+backgroundColor="#f7f7f7"            # Fundo geral suave
+secondaryBackgroundColor="#e0f2f1"   # Fundo dos cards/caixas
+textColor="#1b1e23"                  # Preto suave
+font="sans serif"
