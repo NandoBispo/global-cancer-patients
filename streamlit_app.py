@@ -1,12 +1,12 @@
 # === app.py ===
 import streamlit as st
-import sklearn
+# import sklearn
 # st.write(f"Versão do scikit-learn no ambiente Streamlit: {sklearn.__version__}")
 
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import joblib
+# import joblib
 import pickle
 from matplotlib.ticker import FuncFormatter
 from pre_processamento import carregar_dados_processados
@@ -90,16 +90,22 @@ elif pagina == 'Processo':
 # 🔮 Página de Previsão
 # ===========================
 elif pagina == 'Previsão':
-    # st.set_page_config(
-    #     page_title="Previsão de Prognóstico de Câncer",
-    #     page_icon="🔮",
-    #     layout="wide"
-    # )
+
+    @st.cache_data
+    def carregar_valores_unicos():
+        url = 'https://raw.githubusercontent.com/NandoBispo/global-cancer-patients/main/dados/global_cancer_patients_2015_2024.csv'
+        df_dados = pd.read_csv(url)
+        return {
+            'countries': sorted(df_dados['Country_Region'].dropna().unique().tolist()),
+            'cancers': sorted(df_dados['Cancer_Type'].dropna().unique().tolist()),
+            'anos': sorted(df_dados['Year'].dropna().unique().astype(int).tolist())
+        }
+
+    valores = carregar_valores_unicos()
 
     st.title("🔮 Previsão de Prognóstico de Câncer")
     st.markdown("Preencha os dados do paciente abaixo para obter uma previsão sobre a gravidade do prognóstico.")
 
-    # --- Carregamento do Modelo ---
     @st.cache_resource
     def carregar_modelo():
         try:
@@ -109,21 +115,11 @@ elif pagina == 'Previsão':
             st.error(f"❌ Erro ao carregar o modelo: {e}")
             return None
 
-        
-    # def carregar_modelo():
-    #     try:
-    #         return joblib.load("modelo_cancer.pkl")
-    #     except Exception as e:
-    #         st.error(f"Erro ao carregar modelo: {e}")
-    #         return None
-            
-
     modelo = carregar_modelo()
 
     if modelo is None:
         st.error("❌ Arquivo do modelo não encontrado! Certifique-se de que `modelo_cancer.pkl` está no mesmo diretório do app.")
     else:
-        # --- Entrada de Dados ---
         st.divider()
         st.subheader("Por favor, insira os dados do paciente:")
 
@@ -138,6 +134,7 @@ elif pagina == 'Previsão':
                 options=['Stage 0', 'Stage I', 'Stage II', 'Stage III', 'Stage IV'],
                 value='Stage II'
             )
+            country_region = st.selectbox("País/Região", valores['countries'])
 
         with col2:
             genetic_risk = st.slider("Risco Genético (0-10)", 0, 10, 5)
@@ -145,6 +142,8 @@ elif pagina == 'Previsão':
             alcohol_use = st.slider("Consumo de Álcool (0-10)", 0, 10, 5)
             smoking = st.slider("Nível de Tabagismo (0-10)", 0, 10, 5)
             obesity_level = st.slider("Nível de Obesidade (0-10)", 0, 10, 5)
+            cancer_type = st.selectbox("Tipo de Câncer", valores['cancers'])
+            year = st.selectbox("Ano do Diagnóstico", valores['anos'])
 
         st.divider()
 
@@ -161,34 +160,39 @@ elif pagina == 'Previsão':
                 'Smoking': [smoking],
                 'Obesity_Level': [obesity_level],
                 'Cancer_Stage_Ordinal': [cancer_stage_ordinal],
-                'Gender': [gender]
+                'Gender': [gender],
+                'Country_Region': [country_region],
+                'Cancer_Type': [cancer_type],
+                'Year': [year]
             })
 
             st.write("⚙️ **Dados de entrada para o modelo:**")
             st.dataframe(input_data)
 
-            # Realiza previsão
-            predicao = modelo.predict(input_data)[0]
-            probabilidades = modelo.predict_proba(input_data)
+            try:
+                predicao = modelo.predict(input_data)[0]
+                probabilidades = modelo.predict_proba(input_data)
 
-            prob_df = pd.DataFrame(probabilidades, columns=modelo.classes_, index=["Probabilidade"])
+                prob_df = pd.DataFrame(probabilidades, columns=modelo.classes_, index=["Probabilidade"])
 
-            # Resultado
-            st.write("---")
-            st.subheader("📈 Resultado da Previsão")
+                st.write("---")
+                st.subheader("📈 Resultado da Previsão")
 
-            if predicao == 'Alta Gravidade':
-                st.error(f"**Prognóstico Previsto:** {predicao}")
-            else:
-                st.success(f"**Prognóstico Previsto:** {predicao}")
+                if predicao == 'Alta Gravidade':
+                    st.error(f"**Prognóstico Previsto:** {predicao}")
+                else:
+                    st.success(f"**Prognóstico Previsto:** {predicao}")
 
-            st.write("O gráfico abaixo mostra a confiança do modelo em cada classe:")
-            st.bar_chart(prob_df.T)
+                st.write("O gráfico abaixo mostra a confiança do modelo em cada classe:")
+                st.bar_chart(prob_df.T)
 
-            st.info("""
-            **Aviso Importante:** O modelo foi treinado com dados sintéticos e apresenta desempenho elevado.
-            Os resultados são ilustrativos e não devem ser usados para decisões clínicas.
-            """)
+                st.info("""
+                **Aviso Importante:** O modelo foi treinado com dados sintéticos e apresenta desempenho elevado.
+                Os resultados são ilustrativos e não devem ser usados para decisões clínicas.
+                """)
+            except Exception as e:
+                st.error(f"❌ Erro durante a previsão: {e}")
+
 
 
 # ===========================
