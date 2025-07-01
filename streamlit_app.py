@@ -1,7 +1,7 @@
 # === app.py ===
 import streamlit as st
 import sklearn
-st.write(f"Versão do scikit-learn no ambiente Streamlit: {sklearn.__version__}")
+# st.write(f"Versão do scikit-learn no ambiente Streamlit: {sklearn.__version__}")
 
 import pandas as pd
 import seaborn as sns
